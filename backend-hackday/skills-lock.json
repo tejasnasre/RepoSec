@@ -1,0 +1,33 @@
+{
+  "version": 2,
+  "skills": {
+    "better-auth-best-practices": {
+      "source": "better-auth/skills",
+      "commit": "20c9e88a5c007461a703f1c213572b073196113e",
+      "sourceType": "github",
+      "skillPath": "better-auth/best-practices/SKILL.md",
+      "computedHash": "2773c3687f2cf96d659049ebf2d8c86058a33541b09360712df0dc6b1404c403"
+    },
+    "bun-runtime": {
+      "source": "affaan-m/ECC",
+      "commit": "4adeee6732a12d1540f49a4d50a38ce8c97f9a53",
+      "sourceType": "github",
+      "skillPath": "skills/bun-runtime/SKILL.md",
+      "computedHash": "920e3f890c6a03d90cc0133d0a15ea8965f992ad48819e483b31a36b69377f2f"
+    },
+    "elysiajs": {
+      "source": "elysiajs/skills",
+      "commit": "1466d85aa4f2a0fec91f71311e65bbfa91aa7dc5",
+      "sourceType": "github",
+      "skillPath": "elysia/SKILL.md",
+      "computedHash": "a6c0405d2b902e2fe6227d612812d376f5ebb568ea55ec28634f92abf16485c4"
+    },
+    "neon-postgres": {
+      "source": "neondatabase/agent-skills",
+      "commit": "d3601d9e1f9398b96a1ee25047bafba5f04199eb",
+      "sourceType": "github",
+      "skillPath": "skills/neon-postgres/SKILL.md",
+      "computedHash": "0e1db49f25e9208cb24fa2084a542d52d60a85c09271b915acc3dad6901de6a0"
+    }
+  }
+}
