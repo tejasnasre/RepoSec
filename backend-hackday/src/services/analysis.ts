@@ -24,7 +24,7 @@ import { notifyRepository, repositoryName } from "./notifications";
 import { buildReport } from "./report";
 import { verifyRemediationFromAnalysis } from "./verification";
 
-type Trigger = "connect" | "manual" | "push" | "advisory_refresh" | "verify";
+type Trigger = "connect" | "manual" | "push" | "advisory_refresh" | "verify" | "scheduled";
 const sevRank = { critical: 5, high: 4, medium: 3, low: 2, informational: 1, unknown: 0 } as const;
 
 /**
@@ -307,16 +307,20 @@ export async function runAnalysis(analysisId: string) {
       const name = await repositoryName(ctx.repositoryId);
       const sha7 = head.sha.slice(0, 7);
       const path = `/dashboard/repositories/${ctx.repositoryId}`;
-      await notifyRepository({
-        kind: "analysis_completed",
-        severity: "info",
-        category: "analysis",
-        repositoryId: ctx.repositoryId,
-        dedupeKey: `analysis:${analysisId}`,
-        title: `Analysis complete: ${name} @ ${sha7}`,
-        body: `${built.report.executiveSummary}\n\nAnalyzed commit ${head.sha}.`,
-        path,
-      });
+      // A weekly re-scan that found exactly what the last scan found is not worth an email every Friday.
+      const unchanged = analysis.trigger === "scheduled" && (await sameAsPreviousScan(ctx.repositoryId, analysisId, head.sha, totals));
+      if (!unchanged) {
+        await notifyRepository({
+          kind: "analysis_completed",
+          severity: "info",
+          category: "analysis",
+          repositoryId: ctx.repositoryId,
+          dedupeKey: `analysis:${analysisId}`,
+          title: `${analysis.trigger === "scheduled" ? "Weekly re-scan" : "Analysis complete"}: ${name} @ ${sha7}`,
+          body: `${built.report.executiveSummary}\n\nAnalyzed commit ${head.sha}.`,
+          path,
+        });
+      }
       // One alert per package version (not per advisory) so a package with many advisories sends one email.
       const alertable = built.ranked.filter((x) => x.severity === "critical" || x.severity === "high" || x.classification === "malicious_package");
       const groups = new Map<string, typeof alertable>();
@@ -350,6 +354,19 @@ export async function runAnalysis(analysisId: string) {
     await db.update(repositoryAnalyses).set({ status: "failed", error: `${currentName}: ${message}`.slice(0, 500), completedAt: new Date() }).where(eq(repositoryAnalyses.id, analysisId));
     throw e; // let the queue retry with backoff / dead-letter
   }
+}
+
+/** True when the previous completed analysis saw the same commit and identical totals. */
+async function sameAsPreviousScan(repositoryId: string, currentId: string, sha: string, totals: Record<string, number>) {
+  const [prev] = await db
+    .select({ commitSha: repositoryAnalyses.commitSha, totals: repositoryAnalyses.totals })
+    .from(repositoryAnalyses)
+    .where(and(eq(repositoryAnalyses.repositoryId, repositoryId), eq(repositoryAnalyses.status, "completed"), ne(repositoryAnalyses.id, currentId)))
+    .orderBy(desc(repositoryAnalyses.completedAt))
+    .limit(1);
+  if (!prev || prev.commitSha !== sha) return false;
+  const keys = new Set([...Object.keys(totals), ...Object.keys(prev.totals ?? {})]);
+  return [...keys].every((k) => (totals[k] ?? 0) === (prev.totals?.[k] ?? 0));
 }
 
 function compareVersions(a: string, b: string) {

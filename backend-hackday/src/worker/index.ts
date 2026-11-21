@@ -5,6 +5,7 @@ import { githubRepositoryMemberships } from "../db/schema";
 import { claimJob, completeJob, enqueue, failJob, queueStats, reapStaleJobs, type ClaimedJob } from "../lib/queue";
 import { refreshAdvisoriesForRepository, runAnalysis } from "../services/analysis";
 import { sendEmail } from "../services/email";
+import { rescanConfig, runScheduledRescan } from "../services/scheduled-rescan";
 
 const workerId = `${hostname()}-${process.pid}`;
 const CONCURRENCY = Number(process.env.WORKER_CONCURRENCY ?? 3);
@@ -17,6 +18,11 @@ const handlers: Record<string, Handler> = {
 
   "notification.email.send": async (p) => {
     await sendEmail(String(p.logId), String(p.to), String(p.subject), String(p.html));
+  },
+
+  "repository.rescan_sweep": async () => {
+    const r = await runScheduledRescan();
+    if (r.queued || r.window) console.log(`[worker] rescan sweep (${r.mode}): ${r.queued} queued of ${r.candidates} candidate(s)`);
   },
 
   "advisory.refresh": async () => {
@@ -82,6 +88,15 @@ async function loop() {
 setInterval(() => void reapStaleJobs().catch((e) => console.error("[worker] reaper", e)), 60_000);
 const refreshMinutes = Number(process.env.ADVISORY_REFRESH_MINUTES ?? 360);
 setInterval(() => void enqueue({ type: "advisory.refresh", payload: {}, dedupeKey: "advisory-refresh", timeoutSeconds: 1800, maxAttempts: 2 }).catch(() => {}), refreshMinutes * 60_000);
+
+// Weekly re-scan: ticks often, the handler decides whether we are in the Friday-night window (or catching up after a missed one).
+const rescan = rescanConfig();
+if (rescan.enabled) {
+  const tick = () => void enqueue({ type: "repository.rescan_sweep", payload: {}, dedupeKey: "rescan-sweep", timeoutSeconds: 600, maxAttempts: 2 }).catch(() => {});
+  setInterval(tick, rescan.tickMinutes * 60_000);
+  tick(); // also right after a restart, so a worker that was down on Friday catches up
+  console.log(`[worker] weekly re-scan on day ${rescan.day} from ${rescan.hour}:00 ${rescan.timeZone} (stale after ${rescan.minAgeHours}h)`);
+}
 
 const healthPort = Number(process.env.WORKER_HEALTH_PORT ?? 4100);
 Bun.serve({

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
@@ -26,10 +26,18 @@ function isActive(pathname: string | null, href: string) {
   return href === "/dashboard" ? pathname === href : pathname.startsWith(href);
 }
 
+const noopSubscribe = () => () => {};
+/** false during SSR and the hydration pass, true afterwards (keeps client-only cache data out of the first render). */
+function useHydrated() {
+  return useSyncExternalStore(noopSubscribe, () => true, () => false);
+}
+
 /** Unread count from the cached notifications feed (no extra request: the dashboard already warms it). */
 function UnreadBadge() {
+  const hydrated = useHydrated();
   const unread = useApi<{ unread: number }>("/notifications").data?.unread ?? 0;
-  if (unread === 0) return null;
+  // The cache can already hold data on the client while the server rendered none: wait for hydration.
+  if (!hydrated || unread === 0) return null;
   return <SidebarMenuBadge className="bg-sky-600 !text-white">{unread > 99 ? "99+" : unread}</SidebarMenuBadge>;
 }
 

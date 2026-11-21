@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, ilike, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, ilike, inArray, isNull, sql } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { db } from "../db";
 import {
@@ -105,7 +105,7 @@ export const repositoryRoutes = new Elysia({ prefix: "/repositories" })
     "/:id/rescan",
     async ({ user, params }) => {
       await assertAccess(user.id, params.id);
-      const [running] = await db.select({ id: repositoryAnalyses.id }).from(repositoryAnalyses).where(and(eq(repositoryAnalyses.repositoryId, params.id), inArray(repositoryAnalyses.status, ["queued", "running"]))).limit(1);
+      const [running] = await db.select({ id: repositoryAnalyses.id }).from(repositoryAnalyses).where(and(eq(repositoryAnalyses.repositoryId, params.id), inArray(repositoryAnalyses.status, ["queued", "running"]), gt(repositoryAnalyses.createdAt, new Date(Date.now() - 3 * 3600_000)))).limit(1); // older "running" rows are orphaned (worker died); do not let them block rescans forever
       if (running) return { analysisId: running.id, alreadyRunning: true };
       const a = await requestAnalysis(params.id, "manual");
       audit(user.id, "repository.rescan", "repository", params.id);

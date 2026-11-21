@@ -50,7 +50,7 @@ export const repositoryAnalyses = pgTable(
     repositoryId: uuid("repository_id").notNull().references(() => githubRepositories.id, { onDelete: "cascade" }),
     commitSha: text("commit_sha"),
     branch: text("branch"),
-    trigger: text("trigger", { enum: ["connect", "manual", "push", "advisory_refresh", "verify"] }).notNull(),
+    trigger: text("trigger", { enum: ["connect", "manual", "push", "advisory_refresh", "verify", "scheduled"] }).notNull(),
     status: text("status", { enum: ["queued", "running", "completed", "failed"] }).notNull().default("queued"),
     currentStage: text("current_stage"),
     error: text("error"),

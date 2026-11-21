@@ -140,6 +140,7 @@ cd ../frontend-hackday && cp .env.example .env.local   # NEXT_PUBLIC_API_URL=htt
 | `GITHUB_WEBHOOK_SECRET` | for webhooks | `openssl rand -hex 32`, same value on the GitHub App |
 | `RESEND_API_KEY` / `EMAIL_FROM` | no | Without a key, emails are logged as `skipped` and notifications stay in-app |
 | `INVESTIGATION_LIMIT`, `WORKER_CONCURRENCY`, `ADVISORY_REFRESH_MINUTES`, `NVD_API_KEY` | no | Pipeline tuning |
+| `RESCAN_ENABLED`, `RESCAN_TIMEZONE`, `RESCAN_DAY`, `RESCAN_HOUR`, `RESCAN_MIN_AGE_HOURS` | no | Weekly re-scan of stale repos (default Friday 22:00 Asia/Kolkata, repos not scanned for 6+ days) |
 
 The GitHub App needs repository **Contents** (read and write, for the fix branch), **Pull requests** (write), **Metadata** (read), and **Checks** and **Actions** (read). Subscribe to the Push, Pull request, Check run, Check suite and Workflow run events.
 

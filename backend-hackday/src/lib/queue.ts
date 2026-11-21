@@ -4,7 +4,8 @@ import { db } from "../db";
 export type JobType =
   | "repository.analyze"
   | "notification.email.send"
-  | "advisory.refresh";
+  | "advisory.refresh"
+  | "repository.rescan_sweep";
 
 export type EnqueueInput = {
   type: JobType;

@@ -1,7 +1,9 @@
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { FileSearch, GitPullRequest, Lock, ShieldCheck } from "lucide-react";
 import { AuthErrorNotice } from "@/components/auth-error-notice";
 import { GitHubSignInButton } from "@/components/github-sign-in-button";
+import { getSession } from "@/lib/session";
 
 const steps = [
   {
@@ -21,9 +23,19 @@ const steps = [
   },
 ];
 
+// Reads cookies, so it must live inside <Suspense> to keep the landing page prerenderable.
+async function RedirectIfSignedIn() {
+  if (await getSession()) redirect("/dashboard");
+  return null;
+}
+
 export default function Home() {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-5xl flex-col px-6 py-16 sm:py-24">
+      <Suspense>
+        <RedirectIfSignedIn />
+      </Suspense>
+
       <p className="font-mono text-sm text-muted-foreground">repository security intelligence</p>
 
       <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-tight text-balance sm:text-6xl">

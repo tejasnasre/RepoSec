@@ -19,7 +19,7 @@ export type ConnectedRepository = Repository & {
 
 export type Analysis = AnalysisSummary & {
   repositoryId: string; commitSha: string | null; branch: string | null;
-  trigger: "connect" | "manual" | "push" | "advisory_refresh" | "verify"; error: string | null;
+  trigger: "connect" | "manual" | "push" | "advisory_refresh" | "verify" | "scheduled"; error: string | null;
   totals: Totals | Record<string, never>; startedAt: string | null;
 };
 

@@ -11,14 +11,18 @@
     "db:migrate": "drizzle-kit migrate",
     "auth:schema": "bunx --bun auth@latest generate --config src/lib/auth.ts --output src/db/schema/auth.ts -y",
     "worker": "bun --watch src/worker/index.ts",
-    "worker:start": "bun src/worker/index.ts"
+    "worker:start": "bun src/worker/index.ts",
+    "email": "email dev --dir src/emails"
   },
   "devDependencies": {
     "@types/bun": "^1.4.5",
     "@types/pg": "^8.23.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@types/semver": "^7.8.0",
     "drizzle-kit": "^0.31.11",
     "pg": "^8.23.1",
+    "react-email": "^6.11.16",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   },
@@ -28,9 +32,13 @@
   "dependencies": {
     "@elysia/node": "^1.4.6",
     "@elysiajs/cors": "^1.4.3",
+    "@react-email/components": "^1.0.12",
     "better-auth": "^1.7.27",
     "drizzle-orm": "^0.45.4",
     "elysia": "^1.4.32",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "resend": "^6.39.0",
     "semver": "^7.8.6",
     "yaml": "^2.9.1"
   }

@@ -101,7 +101,7 @@ export const workspaceRoutes = new Elysia()
         })),
         ...analyses.map((a) => ({
           at: a.completedAt ?? a.startedAt ?? a.createdAt, type: "analysis", repositoryId: a.repositoryId, repository: names.get(a.repositoryId) ?? "",
-          title: `${a.trigger === "push" ? "Push-triggered" : a.trigger === "advisory_refresh" ? "Advisory refresh" : a.trigger === "verify" ? "Fix verification" : a.trigger === "connect" ? "Initial" : "Manual"} analysis ${a.status}`,
+          title: `${a.trigger === "push" ? "Push-triggered" : a.trigger === "advisory_refresh" ? "Advisory refresh" : a.trigger === "verify" ? "Fix verification" : a.trigger === "connect" ? "Initial" : a.trigger === "scheduled" ? "Weekly re-scan" : "Manual"} analysis ${a.status}`,
           detail: a.status === "failed" ? a.error : a.commitSha ? `commit ${a.commitSha.slice(0, 7)}` : null, status: a.status, link: `/dashboard/repositories/${a.repositoryId}`,
         })),
         ...prs.map(({ pr, pkg }) => ({

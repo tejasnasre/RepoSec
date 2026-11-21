@@ -11,7 +11,8 @@ import {
 } from "../db/schema";
 import { env } from "../env";
 import { enqueue } from "../lib/queue";
-import { escapeHtml } from "./email";
+import { render } from "@react-email/components";
+import NotificationEmail from "../emails/notification";
 
 export type NotifyInput = {
   kind: string;
@@ -84,7 +85,7 @@ async function notifyUser(userId: string, input: NotifyInput) {
     .returning();
   await enqueue({
     type: "notification.email.send",
-    payload: { logId: log!.id, to: u.email, subject: `[RepoSec] ${input.title}`, html: renderEmail(input, n.link) },
+    payload: { logId: log!.id, to: u.email, subject: `[RepoSec] ${input.title}`, html: await renderEmail(input, n.link) },
     dedupeKey: `email:${log!.id}`,
     maxAttempts: 5,
     timeoutSeconds: 60,
@@ -92,12 +93,7 @@ async function notifyUser(userId: string, input: NotifyInput) {
 }
 
 function renderEmail(input: NotifyInput, link: string | null) {
-  const body = escapeHtml(input.body).replace(/\n/g, "<br>");
-  return `<div style="font-family:system-ui,sans-serif;max-width:560px;margin:auto;color:#111">
-  <h2 style="margin:0 0 12px">${escapeHtml(input.title)}</h2>
-  <p style="line-height:1.5">${body}</p>
-  ${link ? `<p><a href="${escapeHtml(link)}" style="background:#111;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none">View full report</a></p>` : ""}
-  <p style="color:#666;font-size:12px">You receive this because you connected this repository to RepoSec. Change this in Settings → Notifications.</p></div>`;
+  return render(<NotificationEmail title={input.title} body={input.body} link={link} severity={input.severity} />);
 }
 
 export async function usersWithInstallation(installationRowId: string) {
